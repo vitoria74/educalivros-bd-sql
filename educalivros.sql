@@ -210,10 +210,10 @@ INSERT INTO AudioBook (ISBN, Titulo, fk_Produto_ID, fk_Editora_Codigo, fk_Editor
 
 INSERT INTO Ebook (ISBN, Titulo, fk_Produto_ID, fk_Editora_Codigo, fk_Editora_Nome, fk_Editora_E-mail) VALUES --Vitória
 ( '978-0-306-40615-7', 'Dominando Python: Do Básico ao Avançado', 'EBO001', 'EDI001', 'Penguin Books', 'penguin@example.com'),
-( '978-0143039434', 'Desenvolvimento Web Moderno: Práticas e Técnicas Essenciais', 'EBOO2EDI002', 'Bantam', 'bantam@example.com'),
-( '978-0-14-044425-4', 'JavaScript Ninja: Domine a Arte da Programação Front-End', 'EBO', 'EDI003', 'Dover Publications', 'dover@example.com'),
-( '978-0-06-231500-7', 'Algoritmos e Estruturas de Dados: Uma Abordagem Prática', 'AUD004', 'EDI004', 'Signet', 'signet@example.com'),
-( '978-0-385-35139-7', 'A Arte de Programar em C++: Conceitos e Aplicações', 'AUD005', 'EDI005', 'Independently published', 'independent@example.com'),
+( '978-0143039434-5', 'Desenvolvimento Web Moderno: Práticas e Técnicas Essenciais', 'EBO002','EDI002', 'Bantam', 'bantam@example.com'),
+( '978-0-14-044425-4', 'JavaScript Ninja: Domine a Arte da Programação Front-End', 'EBO003', 'EDI003', 'Dover Publications', 'dover@example.com'),
+( '978-0-06-231500-7', 'Algoritmos e Estruturas de Dados: Uma Abordagem Prática', 'EBO004', 'EDI004', 'Signet', 'signet@example.com'),
+( '978-0-385-35139-7', 'A Arte de Programar em C++: Conceitos e Aplicações', 'EBO005', 'EDI005', 'Independently published', 'independent@example.com');
 
 INSERT INTO Entrega (Frete, Status, Endereco) VALUES
 (10.50, 'Entregue', 'Rua X, 789'),
