@@ -319,3 +319,34 @@ AFTER INSERT ON "Avaliacao"
 FOR EACH ROW
 EXECUTE FUNCTION log_avaliacao();
 
+CREATE VIEW DetalhesProfessores AS
+SELECT 
+    p.Departamento,
+    p._IP_Identificacao_do_professor AS Identificacao,
+    p.Disciplina,
+    u.CPF,
+    u.Endereco
+FROM 
+    Professor p
+JOIN 
+    Usuario u ON p.fk_Usuario_CPF = u.CPF;
+
+CREATE VIEW DetalhesLivrosAvaliacoes AS
+SELECT 
+    l.Titulo,
+    l.Quant_Estoque,
+    e.Nome AS Nome_Editora,
+    e.E_mail AS Email_Editora,
+    a.Nome AS Avaliacao_Nome,
+    a.Data AS Avaliacao_Data,
+    a.Comentarios AS Avaliacao_Comentarios,
+    a.Nota AS Avaliacao_Nota
+FROM 
+    Livro l
+JOIN 
+    Editora e ON l.fk_Editora_Codigo = e.Codigo AND l.fk_Editora_Nome = e.Nome AND l.fk_Editora_E_mail = e.E_mail
+JOIN 
+    recebe r ON l.ISBN = r.fk_Livro_ISBN AND l.fk_Produto_ID = r.fk_Livro_fk_Produto_ID
+JOIN 
+    Avaliacao a ON r.fk_Avaliacao_ID = a.ID;
+
