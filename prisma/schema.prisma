@@ -148,3 +148,32 @@ enum Role {
  ADM
 }
 
+CREATE OR REPLACE FUNCTION set_default_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.status IS NULL THEN
+    NEW.status := 'Pending';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE Avaliacao_Log (
+  ID SERIAL PRIMARY KEY,
+  Avaliacao_ID VARCHAR NOT NULL,
+  Nome VARCHAR NOT NULL,
+  Data TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  Comentarios TEXT,
+  Nota FLOAT,
+  Log_Time TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION log_avaliacao()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO Avaliacao_Log (Avaliacao_ID, Nome, Data, Comentarios, Nota)
+  VALUES (NEW.ID, NEW.Nome, NEW.Data, NEW.Comentarios, NEW.Nota);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
