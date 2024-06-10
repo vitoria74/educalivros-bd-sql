@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -7,159 +13,138 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Professor {
-  Departamento             String
-  _IP_Identificacao_do_professor  String @id
-  Disciplina               String
-  fk_Usuario_CPF           String
-  Usuario                   Usuario @relation(fields: [fk_Usuario_CPF], references: [CPF])
-  @@id([_IP_Identificacao_do_professor, fk_Usuario_CPF])
+model Usuario { 
+Endereco String 
+CPF String @id 
+atz Role? @default(USER) 
+usuario Professor? 
+usuario2 Aluno? 
+Usario3 CLIENTE_EXTERNO?
+avaliacoes Avaliacao? 
+
+plano_premium Plano_Premium?
+
+} 
+
+model Professor { 
+Departamento String 
+Disciplina String  
+atz Role? @default(USER)
+Cpf String @id
+Cpfid Usuario @relation(fields: [Cpf], references: [CPF])
+
 }
 
-model Aluno {
-  Matricula                         String @id
-  _CR__coeficiente_de_rendimento   Float
-  Faltas                            Int
-  fk_Usuario_CPF                    String
-  Usuario                           Usuario @relation(fields: [fk_Usuario_CPF], references: [CPF])
+model Aluno { 
+Matricula String 
+FALTAS String
+atz Role? @default(USER) 
+Cpf String @id
+Cpfid Usuario @relation(fields: [Cpf], references: [CPF])
+} 
+ 
+model CLIENTE_EXTERNO { 
+E_mail String @unique 
+atz Role? @default(USER) 
+Cpf String @id
+Cpfid Usuario @relation(fields: [Cpf], references: [CPF])
+} 
+
+model Livro { 
+Quant_Estoque Int  
+ISBN String @id
+Titulo String  
+atz Role? @default(ADM)
+} 
+
+model AudioBook { 
+ISBN String @id 
+Titulo String 
+atz Role? @default(ADM)
 }
 
-model Cliente_Externo_ {
-  E_mail          String
-  fk_Usuario_CPF  String
-  Usuario         Usuario @relation(fields: [fk_Usuario_CPF], references: [CPF])
-  @@id([E_mail, fk_Usuario_CPF])
+model Ebook { 
+ISBN String @id
+Titulo String
+atz Role? @default(ADM)
+} 
+
+model Entrega { 
+Frete Float 
+Status String 
+Endereco String 
+Numero Int @id
+atz Role? @default(ADM)
+}  
+
+model Autor { 
+Classificacao Int @id 
+P_Nome String 
+S_Nome String 
+Numero_de_Vendas Int 
+atz Role? @default(ADM)
+} 
+
+model Editora { 
+Codigo String @id
+Nome String 
+Endereco String 
+E_mail String @unique
+atz Role? @default(ADM)
+} 
+
+model Categoria { 
+Id String @id 
+Nome String 
+Descricao String 
+Numero_de_livros String 
+Numero_de_livros_vendidos String 
+atz Role? @default(ADM)
+}  
+
+model Avaliacao { 
+ID String  
+Nome Int 
+Data DateTime 
+Comentarios String 
+Nota Float 
+atz Role? @default(USER) 
+Cpf String @id
+Cpfid Usuario @relation(fields: [Cpf], references: [CPF])
+} 
+
+model Pedido { 
+Data DateTime 
+Status String 
+Cartao String 
+Dinheiro String 
+Valor Float
+Produto String 
+Numero Int @id
+atz Role? @default(ADM)
+} 
+
+model Plano_Premium{ 
+Desconto Int 
+Cpf String @id
+Cpfid Usuario @relation(fields: [Cpf], references: [CPF])
 }
 
-model Livro {
-  Quant_Estoque        Int
-  ISBN                 String @id
-  Titulo               String
-  fk_Produto_ID        String
-  fk_Editora_Codigo    String
-  fk_Editora_Nome      String
-  fk_Editora_E_mail    String
-  Produto              Produto @relation(fields: [fk_Produto_ID], references: [ID])
+model Jogos_tabuleiro { 
+Nome_jogo String 
+Codigo_barra String @id 
+atz Role? @default(ADM)
+} 
+
+model Produto { 
+ID String @id 
+Nome Int 
+atz Role? @default(ADM)
+
+} 
+
+enum Role { 
+ USER 
+ ADM
 }
 
-model AudioBook {
-  ISBN                 String @id
-  Titulo               String
-  fk_Produto_ID        String
-  fk_Editora_Codigo    String
-  fk_Editora_Nome      String
-  fk_Editora_E_mail    String
-  Produto              Produto @relation(fields: [fk_Produto_ID], references: [ID])
-}
-
-model Ebook {
-  ISBN                 String @id
-  Titulo               String
-  fk_Produto_ID        String
-  fk_Editora_Codigo    String
-  fk_Editora_Nome      String
-  fk_Editora_E_mail    String
-  Produto              Produto @relation(fields: [fk_Produto_ID], references: [ID])
-}
-
-model Entrega {
-  Frete               Float
-  Status              String
-  Endereco            String
-  Numero              Int @id
-  fk_Pedido_Numero    Int
-}
-
-model Autor {
-  P_Nome              String
-  S_Nome              String
-  Numero_de_Vendas    Int
-}
-
-model Editora {
-  Codigo              String
-  Nome                String
-  Endereco            String
-  E_mail              String
-  @@id([Codigo, Nome, E_mail])
-}
-
-model Categoria {
-  ID                        String @id
-  Nome                      String
-  Descricao                 String
-  Numero_de_livros          Int
-  Numero_de_livros_vendidos Int
-}
-
-model Avaliacao {
-  ID          String @id
-  Nome        String
-  Data        DateTime
-  Comentarios String
-  Nota        Float
-}
-
-model Pedido {
-  Data            DateTime
-  status          String
-  Cartao          String
-  Dinheiro        String
-  Valor           Float
-  Produto         String
-  Numero          Int @id
-  fk_Usuario_CPF  String
-  Usuario         Usuario @relation(fields: [fk_Usuario_CPF], references: [CPF])
-}
-
-model Plano_Premium {
-  desconto   Float
-  CPF        String @id
-  Usuario    Usuario @relation(fields: [CPF], references: [CPF])
-}
-
-model Material_Escolar {
-  Caderno             Float
-  Bolsa               Float
-  Codigo_Barra        String @id
-  Caderno_vendido     Int
-  Bolsa_vendida       Int
-  fk_Produto_ID       String
-  Produto             Produto @relation(fields: [fk_Produto_ID], references: [ID])
-}
-
-model Jogos_Tabuleiro {
-  Nome_Jogo           String
-  Codigo_Barra        String @id
-  fk_Produto_ID       String
-  Produto             Produto @relation(fields: [fk_Produto_ID], references: [ID])
-}
-
-CREATE OR REPLACE FUNCTION set_default_status()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.status IS NULL THEN
-    NEW.status := 'Pending';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TABLE Avaliacao_Log (
-  ID SERIAL PRIMARY KEY,
-  Avaliacao_ID VARCHAR NOT NULL,
-  Nome VARCHAR NOT NULL,
-  Data TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  Comentarios TEXT,
-  Nota FLOAT,
-  Log_Time TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE OR REPLACE FUNCTION log_avaliacao()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO Avaliacao_Log (Avaliacao_ID, Nome, Data, Comentarios, Nota)
-  VALUES (NEW.ID, NEW.Nome, NEW.Data, NEW.Comentarios, NEW.Nota);
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
