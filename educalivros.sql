@@ -308,3 +308,14 @@ INSERT INTO obtem (fk_Produto_ID) VALUES
 ('PRO003'),
 ('PRO004'),
 ('PRO005'); 
+
+CREATE TRIGGER before_insert_pedido
+BEFORE INSERT ON "Pedido"
+FOR EACH ROW
+EXECUTE FUNCTION set_default_status();
+
+CREATE TRIGGER after_insert_avaliacao
+AFTER INSERT ON "Avaliacao"
+FOR EACH ROW
+EXECUTE FUNCTION log_avaliacao();
+
