@@ -41,7 +41,9 @@ CREATE TABLE Livro (
     PRIMARY KEY (ISBN, fk_Produto_ID)
 );
 
-CREATE TABLE AudioBook ( --Vitória
+ALTER TABLE Livro ADD COLUMN Nota_Media FLOAT; -- pra o trigger CalcularMediaAvaliacao 
+
+CREATE TABLE AudioBook ( 
   	ISBN CHAR,
     Titulo VARCHAR,
     fk_Produto_ID CHAR,
@@ -51,7 +53,7 @@ CREATE TABLE AudioBook ( --Vitória
     PRIMARY KEY (ISBN, fk_Produto_ID)
 );
 
-CREATE TABLE Ebook ( --Vitória
+CREATE TABLE Ebook ( 
   	ISBN CHAR,
     Titulo VARCHAR,
     fk_Produto_ID CHAR,
@@ -126,7 +128,7 @@ CREATE TABLE Material_Escolar (
     PRIMARY KEY (Codigo_Barra, fk_Produto_ID)
 );
 
-CREATE TABLE Jogos_Tabuleiro ( --Vitória
+CREATE TABLE Jogos_Tabuleiro ( 
   Nome_Jogo VARCHAR,
   Codigo_Barra CHAR,
   fk_Produto_ID CHAR,
@@ -267,7 +269,7 @@ INSERT INTO Material_Escolar (Caderno, Bolsa, Codigo_Barra,Caderno_vendido, Bols
 (18.20, 30.00,'85245695',56 ,89 ,'PRO004'),
 (22.50, 35.50,'15975385',21 ,78 , 'PRO005');
 
-INSERT INTO Jogos_Tabuleiro (Nome_Jogo, Codigo_Barra, fk_Produto_ID) VALUES -- Vitória
+INSERT INTO Jogos_Tabuleiro (Nome_Jogo, Codigo_Barra, fk_Produto_ID) VALUES 
 ('Jogo da Vida', '8590123456789', 'JOG001'),
 ('Monopoly', '7245632198745', 'JOG002'),
 ('Lince', '6359874123654', 'JOG003'),
