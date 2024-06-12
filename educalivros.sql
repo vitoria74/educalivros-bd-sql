@@ -394,3 +394,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION CalcularMediaAvaliacao ( -- associa a avaliação ao livro e atualiza a média da avaliação 
+    p_ISBN CHAR,
+    p_ProdutoID CHAR
+)
+RETURNS VOID AS $$
+DECLARE
+    v_Media FLOAT;
+BEGIN
+    SELECT AVG(Nota) INTO v_Media
+    FROM Avaliacao a
+    JOIN recebe r ON a.ID = r.fk_Avaliacao_ID
+    WHERE r.fk_Livro_ISBN = p_ISBN AND r.fk_Livro_fk_Produto_ID = p_ProdutoID;
+    -- Atualizar a tabela Livro com a nova média
+    UPDATE Livro
+    SET Nota_Media = v_Media
+    WHERE ISBN = p_ISBN AND fk_Produto_ID = p_ProdutoID;
+END;
+$$ LANGUAGE plpgsql;
+
