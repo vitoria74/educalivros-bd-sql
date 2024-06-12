@@ -372,3 +372,25 @@ JOIN
 JOIN 
     Avaliacao a ON r.fk_Avaliacao_ID = a.ID;
 
+CREATE OR REPLACE FUNCTION AdicionarNovaAvaliacao ( -- associa o pedido ao produto
+    p_Nome VARCHAR,
+    p_Data DATE,
+    p_Comentarios VARCHAR,
+    p_Nota FLOAT,
+    p_ISBN CHAR,
+    p_ProdutoID CHAR
+)
+RETURNS VOID AS $$
+DECLARE
+    v_AvaliacaoID INTEGER;
+BEGIN
+    INSERT INTO Avaliacao (Nome, Data, Comentarios, Nota)
+    VALUES (p_Nome, p_Data, p_Comentarios, p_Nota)
+    RETURNING ID INTO v_AvaliacaoID;
+    INSERT INTO recebe (fk_Avaliacao_ID, fk_Livro_ISBN, fk_Livro_fk_Produto_ID)
+    VALUES (v_AvaliacaoID, p_ISBN, p_ProdutoID);
+    -- Atualizar a média de notas do livro
+    PERFORM CalcularMediaAvaliacao(p_ISBN, p_ProdutoID);
+END;
+$$ LANGUAGE plpgsql;
+
