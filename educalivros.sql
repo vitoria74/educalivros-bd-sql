@@ -309,15 +309,17 @@ INSERT INTO obtem (fk_Produto_ID) VALUES
 ('PRO004'),
 ('PRO005'); 
 
-CREATE TRIGGER before_insert_pedido
-BEFORE INSERT ON "Pedido"
+CREATE TRIGGER AtualizarEstoqueLivro -- atualiza o estoque do livro
+AFTER INSERT ON Pedido
 FOR EACH ROW
-EXECUTE FUNCTION set_default_status();
-
-CREATE TRIGGER after_insert_avaliacao
-AFTER INSERT ON "Avaliacao"
-FOR EACH ROW
-EXECUTE FUNCTION log_avaliacao();
+BEGIN
+    DECLARE v_ProdutoID CHAR;
+    DECLARE v_Quantidade SMALLINT DEFAULT 1;
+    SELECT fk_Produto_ID INTO v_ProdutoID FROM obtem WHERE fk_Pedido_Numero = NEW.Numero;
+    UPDATE Livro
+    SET Quant_Estoque = Quant_Estoque - v_Quantidade
+    WHERE fk_Produto_ID = v_ProdutoID;
+END;
 
 CREATE VIEW DetalhesProfessores AS
 SELECT 
@@ -330,6 +332,24 @@ FROM
     Professor p
 JOIN 
     Usuario u ON p.fk_Usuario_CPF = u.CPF;
+
+CREATE TRIGGER CalcularMediaAvaliacao -- calcula a média da avaliação dos livros
+AFTER INSERT ON Avaliacao
+FOR EACH ROW
+BEGIN
+    DECLARE v_LivroISBN CHAR;
+    DECLARE v_ProdutoID CHAR;
+    DECLARE v_Media FLOAT;
+    SELECT fk_Livro_ISBN, fk_Livro_fk_Produto_ID INTO v_LivroISBN, v_ProdutoID
+    FROM recebe WHERE fk_Avaliacao_ID = NEW.ID;
+    SELECT AVG(Nota) INTO v_Media
+    FROM Avaliacao a
+    JOIN recebe r ON a.ID = r.fk_Avaliacao_ID
+    WHERE r.fk_Livro_ISBN = v_LivroISBN AND r.fk_Livro_fk_Produto_ID = v_ProdutoID;
+    UPDATE Livro
+    SET Nota_Media = v_Media
+    WHERE ISBN = v_LivroISBN AND fk_Produto_ID = v_ProdutoID;
+END;
 
 CREATE VIEW DetalhesLivrosAvaliacoes AS
 SELECT 
