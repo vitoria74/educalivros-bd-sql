@@ -436,3 +436,10 @@ END;
 $$;
 
 CALL inserir_pedido(1006, '2024-05-01', 'Pendente', '1234 5678 9012 3456', NULL, 45.00, 'Livro', '12345678901', 'PRO001'); -- Exemplo pro stored procedure acima
+
+SELECT * FROM Jogos_Tabuleiro;
+
+SELECT * FROM Ebook;
+
+SELECT * FROM AudioBook;
+
