@@ -17,10 +17,10 @@ A EducaLivros é uma livraria online especializada em vender livros, jogos de ta
 
 ## O que foi implementado?
 - CRUD: Adicionamos mais 3 tabelas (AudioBook, Ebook e Jogos Tabuleiro), fizemos 3 SELECTS (AudioBook, Ebook e Jogos Tabuleiro), 3 UPDATES (UpdateUsuario, UpdateProfessor e UpdateLivro) e 3 DELETES (DeleteUsuario, DeleteProfessor e DeleteLivro)
-- Triggers
-- Views
-- Stored Procedures
-- Segurança
+- Triggers (atualizar_Estoque, atualizar_recomendacao)
+- Views (autor_vendas_recomendacao, livro_resumo)
+- Stored Procedures (atualizar_Estoque, atualizar_recomendacao)
+- Segurança (usuario_comum_aluno, professor_admin)
 - Normalização
 
 ## O projeto no Docker
