@@ -311,105 +311,43 @@ INSERT INTO obtem (fk_Produto_ID) VALUES
 ('PRO004'),
 ('PRO005'); 
 
-CREATE TRIGGER AtualizarEstoqueLivro -- atualiza o estoque do livro
+-- Cria uma função para atualizar a nota média, trigger 1
+CREATE OR REPLACE FUNCTION atualizar_nota_media()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Livro
+    SET Nota_Media = (
+        SELECT AVG(Nota)
+        FROM Avaliacao
+        JOIN recebe ON Avaliacao.ID = recebe.fk_Avaliacao_ID
+        WHERE recebe.fk_Livro_ISBN = NEW.fk_Livro_ISBN
+        AND recebe.fk_Livro_fk_Produto_ID = NEW.fk_Livro_fk_Produto_ID
+    )
+    WHERE ISBN = NEW.fk_Livro_ISBN AND fk_Produto_ID = NEW.fk_Livro_fk_Produto_ID;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Cria trigger para INSERT e UPDATE na tabela Avaliacao
+CREATE TRIGGER trg_atualizar_nota_media
+AFTER INSERT OR UPDATE ON Avaliacao
+FOR EACH ROW
+EXECUTE FUNCTION atualizar_nota_media();
+
+-- Cria uma função para atualizar a quantidade em estoque, trigger 2
+CREATE OR REPLACE FUNCTION atualizar_quantidade_estoque()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Livro
+    SET Quant_Estoque = Quant_Estoque - 1
+    WHERE fk_Produto_ID = NEW.fk_Produto_ID
+    AND ISBN = (SELECT fk_Livro_ISBN FROM obtem WHERE fk_Produto_ID = NEW.fk_Produto_ID);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Cria trigger para INSERT na tabela Pedido
+CREATE TRIGGER trg_atualizar_quantidade_estoque
 AFTER INSERT ON Pedido
 FOR EACH ROW
-BEGIN
-    DECLARE v_ProdutoID CHAR;
-    DECLARE v_Quantidade SMALLINT DEFAULT 1;
-    SELECT fk_Produto_ID INTO v_ProdutoID FROM obtem WHERE fk_Pedido_Numero = NEW.Numero;
-    UPDATE Livro
-    SET Quant_Estoque = Quant_Estoque - v_Quantidade
-    WHERE fk_Produto_ID = v_ProdutoID;
-END;
-
-CREATE VIEW DetalhesProfessores AS
-SELECT 
-    p.Departamento,
-    p._IP_Identificacao_do_professor AS Identificacao,
-    p.Disciplina,
-    u.CPF,
-    u.Endereco
-FROM 
-    Professor p
-JOIN 
-    Usuario u ON p.fk_Usuario_CPF = u.CPF;
-
-CREATE TRIGGER CalcularMediaAvaliacao -- calcula a média da avaliação dos livros
-AFTER INSERT ON Avaliacao
-FOR EACH ROW
-BEGIN
-    DECLARE v_LivroISBN CHAR;
-    DECLARE v_ProdutoID CHAR;
-    DECLARE v_Media FLOAT;
-    SELECT fk_Livro_ISBN, fk_Livro_fk_Produto_ID INTO v_LivroISBN, v_ProdutoID
-    FROM recebe WHERE fk_Avaliacao_ID = NEW.ID;
-    SELECT AVG(Nota) INTO v_Media
-    FROM Avaliacao a
-    JOIN recebe r ON a.ID = r.fk_Avaliacao_ID
-    WHERE r.fk_Livro_ISBN = v_LivroISBN AND r.fk_Livro_fk_Produto_ID = v_ProdutoID;
-    UPDATE Livro
-    SET Nota_Media = v_Media
-    WHERE ISBN = v_LivroISBN AND fk_Produto_ID = v_ProdutoID;
-END;
-
-CREATE VIEW DetalhesLivrosAvaliacoes AS
-SELECT 
-    l.Titulo,
-    l.Quant_Estoque,
-    e.Nome AS Nome_Editora,
-    e.E_mail AS Email_Editora,
-    a.Nome AS Avaliacao_Nome,
-    a.Data AS Avaliacao_Data,
-    a.Comentarios AS Avaliacao_Comentarios,
-    a.Nota AS Avaliacao_Nota
-FROM 
-    Livro l
-JOIN 
-    Editora e ON l.fk_Editora_Codigo = e.Codigo AND l.fk_Editora_Nome = e.Nome AND l.fk_Editora_E_mail = e.E_mail
-JOIN 
-    recebe r ON l.ISBN = r.fk_Livro_ISBN AND l.fk_Produto_ID = r.fk_Livro_fk_Produto_ID
-JOIN 
-    Avaliacao a ON r.fk_Avaliacao_ID = a.ID;
-
-CREATE OR REPLACE FUNCTION AdicionarNovaAvaliacao ( -- associa o pedido ao produto
-    p_Nome VARCHAR,
-    p_Data DATE,
-    p_Comentarios VARCHAR,
-    p_Nota FLOAT,
-    p_ISBN CHAR,
-    p_ProdutoID CHAR
-)
-RETURNS VOID AS $$
-DECLARE
-    v_AvaliacaoID INTEGER;
-BEGIN
-    INSERT INTO Avaliacao (Nome, Data, Comentarios, Nota)
-    VALUES (p_Nome, p_Data, p_Comentarios, p_Nota)
-    RETURNING ID INTO v_AvaliacaoID;
-    INSERT INTO recebe (fk_Avaliacao_ID, fk_Livro_ISBN, fk_Livro_fk_Produto_ID)
-    VALUES (v_AvaliacaoID, p_ISBN, p_ProdutoID);
-    -- Atualizar a média de notas do livro
-    PERFORM CalcularMediaAvaliacao(p_ISBN, p_ProdutoID);
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION CalcularMediaAvaliacao ( -- associa a avaliação ao livro e atualiza a média da avaliação 
-    p_ISBN CHAR,
-    p_ProdutoID CHAR
-)
-RETURNS VOID AS $$
-DECLARE
-    v_Media FLOAT;
-BEGIN
-    SELECT AVG(Nota) INTO v_Media
-    FROM Avaliacao a
-    JOIN recebe r ON a.ID = r.fk_Avaliacao_ID
-    WHERE r.fk_Livro_ISBN = p_ISBN AND r.fk_Livro_fk_Produto_ID = p_ProdutoID;
-    -- Atualizar a tabela Livro com a nova média
-    UPDATE Livro
-    SET Nota_Media = v_Media
-    WHERE ISBN = p_ISBN AND fk_Produto_ID = p_ProdutoID;
-END;
-$$ LANGUAGE plpgsql;
-
+EXECUTE FUNCTION atualizar_quantidade_estoque();
