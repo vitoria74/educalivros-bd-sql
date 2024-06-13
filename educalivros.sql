@@ -7,7 +7,7 @@ CREATE TABLE Usuario (
     fk_Plano_Premium_CPF CHAR 
     
 );
--- Adicionando operação UPDATE
+
 CREATE PROCEDURE UpdateUsuario(IN p_CPF CHAR, IN p_Endereco VARCHAR, IN p_Avaliacao_ID VARCHAR, IN p_Plano_Premium_CPF CHAR)
 BEGIN
     UPDATE Usuario
@@ -17,7 +17,7 @@ BEGIN
     WHERE CPF = p_CPF;
 END;
 
--- Adicionando operação DELETE
+
 CREATE PROCEDURE DeleteUsuario(IN p_CPF CHAR)
 BEGIN
     DELETE FROM Usuario WHERE CPF = p_CPF;
@@ -30,7 +30,7 @@ CREATE TABLE Professor (
     fk_Usuario_CPF CHAR,
     PRIMARY KEY (_IP_Identificacao_do_professor, fk_Usuario_CPF)
 );
--- Adicionando operação UPDATE
+
 CREATE PROCEDURE UpdateProfessor(IN p_IP_Identificacao CHAR, IN p_CPF CHAR, IN p_Departamento VARCHAR, IN p_Disciplina VARCHAR)
 BEGIN
     UPDATE Professor
@@ -39,7 +39,7 @@ BEGIN
     WHERE _IP_Identificacao_do_professor = p_IP_Identificacao AND fk_Usuario_CPF = p_CPF;
 END;
 
--- Adicionando operação DELETE
+
 CREATE PROCEDURE DeleteProfessor(IN p_IP_Identificacao CHAR, IN p_CPF CHAR)
 BEGIN
     DELETE FROM Professor WHERE _IP_Identificacao_do_professor = p_IP_Identificacao AND fk_Usuario_CPF = p_CPF;
@@ -512,5 +512,73 @@ SELECT * FROM Jogos_Tabuleiro;
 
 SELECT * FROM Ebook;
 
-SELECT * FROM AudioBook;
+SELECT * FROM AudioBook; 
+
+CREATE OR REPLACE FUNCTION atualizar_estoque()
+RETURNS TRIGGER AS $$
+DECLARE
+    prev_vendas INT;
+BEGIN
+    -- Obter o valor anterior de N_de_Vendas
+    SELECT "N_de_Vendas" INTO prev_vendas FROM livro WHERE isbn = NEW.isbn;
+    
+    -- Se o número de vendas aumentou, atualizar o estoque
+    IF NEW."N_de_Vendas" > prev_vendas THEN
+        UPDATE livro 
+        SET quant_estoque = quant_estoque - (NEW."N_de_Vendas" - prev_vendas)
+        WHERE isbn = NEW.isbn;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trigger_atualizar_estoque
+AFTER UPDATE OF "N_de_Vendas" ON livro
+FOR EACH ROW
+EXECUTE FUNCTION atualizar_estoque();
+
+CREATE VIEW livro_resumo AS
+SELECT
+  isbn,
+  quant_estoque,
+  "N_de_Vendas"
+FROM livro;
+
+
+CREATE VIEW autor_vendas_recomendacao AS
+SELECT
+  numero_de_vendas,
+  Recomendação
+FROM autor;
+
+-- Criar o role para usuário comum
+CREATE ROLE usuario_comum_aluno LOGIN PASSWORD 'senha_usuario_comum' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+
+-- Conceder permissões para o role acessar apenas as informações de aluno
+GRANT USAGE ON SCHEMA public TO usuario_comum_aluno;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
+
+-- Limitar acesso apenas aos próprios dados do aluno
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
+
+-- Permitir que o role utilize suas próprias funções para operações com os dados do aluno
+ALTER DEFAULT PRIVILEGES FOR ROLE usuario_comum_aluno IN SCHEMA public
+  GRANT SELECT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
+
+-- Criar o role administrativo para professor
+CREATE ROLE professor_admin LOGIN PASSWORD 'senha_professor_admin' SUPERUSER CREATEDB CREATEROLE;
+
+-- Conceder permissões administrativas específicas
+GRANT USAGE ON SCHEMA public TO professor_admin;
+GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
+
+-- Permitir que o role crie suas próprias funções e objetos
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
+ALTER DEFAULT PRIVILEGES FOR ROLE professor_admin IN SCHEMA public
+  GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
+
 
