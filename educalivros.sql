@@ -351,3 +351,88 @@ CREATE TRIGGER trg_atualizar_quantidade_estoque
 AFTER INSERT ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION atualizar_quantidade_estoque();
+
+-- Criar uma função para atualizar a nota média do livro
+CREATE OR REPLACE FUNCTION atualizar_nota_media_livro(isbn_livro CHAR, produto_id CHAR) 
+RETURNS VOID AS $$
+BEGIN
+    UPDATE Livro
+    SET Nota_Media = (
+        SELECT AVG(Nota)
+        FROM Avaliacao
+        JOIN recebe ON Avaliacao.ID = recebe.fk_Avaliacao_ID
+        WHERE recebe.fk_Livro_ISBN = isbn_livro
+        AND recebe.fk_Livro_fk_Produto_ID = produto_id
+    )
+    WHERE ISBN = isbn_livro AND fk_Produto_ID = produto_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Stored procedure para inserir uma nova avaliação e atualizar a nota média do livro
+CREATE OR REPLACE PROCEDURE inserir_avaliacao(
+    p_ID CHAR,
+    p_Nome VARCHAR,
+    p_Data DATE,
+    p_Comentarios VARCHAR,
+    p_Nota FLOAT,
+    p_fk_Livro_ISBN CHAR,
+    p_fk_Livro_fk_Produto_ID CHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Inserir nova avaliação
+    INSERT INTO Avaliacao (ID, Nome, Data, Comentarios, Nota)
+    VALUES (p_ID, p_Nome, p_Data, p_Comentarios, p_Nota);
+
+    -- Inserir relacionamento na tabela 'recebe'
+    INSERT INTO recebe (fk_Avaliacao_ID, fk_Livro_ISBN, fk_Livro_fk_Produto_ID)
+    VALUES (p_ID, p_fk_Livro_ISBN, p_fk_Livro_fk_Produto_ID);
+
+    -- Atualizar a nota média do livro
+    PERFORM atualizar_nota_media_livro(p_fk_Livro_ISBN, p_fk_Livro_fk_Produto_ID);
+END;
+$$;
+
+CALL inserir_avaliacao('AVL006', 'Novo Livro', '2024-05-01', 'Muito bom!', 4.7, '978-0142420591', 'LIV001'); -- Exemplo para stored procedure acima
+
+-- Criar uma função para atualizar a quantidade em estoque do livro
+CREATE OR REPLACE FUNCTION atualizar_quantidade_estoque(produto_id CHAR) 
+RETURNS VOID AS $$
+BEGIN
+    UPDATE Livro
+    SET Quant_Estoque = Quant_Estoque - 1
+    WHERE fk_Produto_ID = produto_id
+    AND ISBN = (SELECT fk_Livro_ISBN FROM obtem WHERE fk_Produto_ID = produto_id);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Stored procedure para inserir um novo pedido e atualizar o estoque do livro
+CREATE OR REPLACE PROCEDURE inserir_pedido(
+    p_Numero SMALLINT,
+    p_Data DATE,
+    p_Status VARCHAR,
+    p_Cartao CHAR,
+    p_Dinheiro CHAR,
+    p_Valor FLOAT,
+    p_Produto VARCHAR,
+    p_fk_Usuario_CPF CHAR,
+    p_fk_Produto_ID CHAR
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Inserir novo pedido
+    INSERT INTO Pedido (Numero, Data, Status, Cartao, Dinheiro, Valor, Produto, fk_Usuario_CPF)
+    VALUES (p_Numero, p_Data, p_Status, p_Cartao, p_Dinheiro, p_Valor, p_Produto, p_fk_Usuario_CPF);
+
+    -- Inserir relacionamento na tabela 'obtem'
+    INSERT INTO obtem (fk_Produto_ID, fk_Pedido_Numero)
+    VALUES (p_fk_Produto_ID, p_Numero);
+
+    -- Atualizar a quantidade em estoque do livro
+    PERFORM atualizar_quantidade_estoque(p_fk_Produto_ID);
+END;
+$$;
+
+CALL inserir_pedido(1006, '2024-05-01', 'Pendente', '1234 5678 9012 3456', NULL, 45.00, 'Livro', '12345678901', 'PRO001'); -- Exemplo pro stored procedure acima
