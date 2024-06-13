@@ -7,6 +7,21 @@ CREATE TABLE Usuario (
     fk_Plano_Premium_CPF CHAR 
     
 );
+-- Adicionando operação UPDATE
+CREATE PROCEDURE UpdateUsuario(IN p_CPF CHAR, IN p_Endereco VARCHAR, IN p_Avaliacao_ID VARCHAR, IN p_Plano_Premium_CPF CHAR)
+BEGIN
+    UPDATE Usuario
+    SET Endereco = p_Endereco,
+        fk_Avaliacao_ID = p_Avaliacao_ID,
+        fk_Plano_Premium_CPF = p_Plano_Premium_CPF
+    WHERE CPF = p_CPF;
+END;
+
+-- Adicionando operação DELETE
+CREATE PROCEDURE DeleteUsuario(IN p_CPF CHAR)
+BEGIN
+    DELETE FROM Usuario WHERE CPF = p_CPF;
+END;
 
 CREATE TABLE Professor (
     Departamento VARCHAR,
@@ -15,6 +30,20 @@ CREATE TABLE Professor (
     fk_Usuario_CPF CHAR,
     PRIMARY KEY (_IP_Identificacao_do_professor, fk_Usuario_CPF)
 );
+-- Adicionando operação UPDATE
+CREATE PROCEDURE UpdateProfessor(IN p_IP_Identificacao CHAR, IN p_CPF CHAR, IN p_Departamento VARCHAR, IN p_Disciplina VARCHAR)
+BEGIN
+    UPDATE Professor
+    SET Departamento = p_Departamento,
+        Disciplina = p_Disciplina
+    WHERE _IP_Identificacao_do_professor = p_IP_Identificacao AND fk_Usuario_CPF = p_CPF;
+END;
+
+-- Adicionando operação DELETE
+CREATE PROCEDURE DeleteProfessor(IN p_IP_Identificacao CHAR, IN p_CPF CHAR)
+BEGIN
+    DELETE FROM Professor WHERE _IP_Identificacao_do_professor = p_IP_Identificacao AND fk_Usuario_CPF = p_CPF;
+END;
 
 CREATE TABLE Aluno (
     Matricula CHAR,
@@ -40,6 +69,21 @@ CREATE TABLE Livro (
     fk_Editora_E_mail VARCHAR,
     PRIMARY KEY (ISBN, fk_Produto_ID)
 );
+
+-- Adicionando operação UPDATE
+CREATE PROCEDURE UpdateLivro(IN p_ISBN CHAR, IN p_fk_Produto_ID CHAR, IN p_Quant_Estoque SMALLINT, IN p_Titulo VARCHAR)
+BEGIN
+    UPDATE Livro
+    SET Quant_Estoque = p_Quant_Estoque,
+        Titulo = p_Titulo
+    WHERE ISBN = p_ISBN AND fk_Produto_ID = p_fk_Produto_ID;
+END;
+
+-- Adicionando operação DELETE
+CREATE PROCEDURE DeleteLivro(IN p_ISBN CHAR, IN p_fk_Produto_ID CHAR)
+BEGIN
+    DELETE FROM Livro WHERE ISBN = p_ISBN AND fk_Produto_ID = p_fk_Produto_ID;
+END;
 
 ALTER TABLE Livro ADD COLUMN Nota_Media FLOAT; -- pra o trigger CalcularMediaAvaliacao 
 
