@@ -212,6 +212,33 @@ CREATE TABLE recebe (
     fk_Livro_fk_Produto_ID Char
 );
 
+--Adicionando segurança ao SQL
+
+
+-- Criar usuários
+CREATE USER 'usuario_admin'@'localhost' IDENTIFIED BY 'senha_admin';
+CREATE USER 'usuario_comum'@'localhost' IDENTIFIED BY 'senha_comum';
+
+-- Criar roles
+CREATE ROLE admin_role;
+CREATE ROLE comum_role;
+
+-- Conceder permissões aos roles
+GRANT ALL PRIVILEGES ON testDB.* TO admin_role;
+GRANT SELECT, INSERT ON testDB.avaliação TO comum_role;
+
+-- Atribuir roles aos usuários
+GRANT admin_role TO 'usuario_admin'@'localhost';
+GRANT comum_role TO 'usuario_comum'@'localhost';
+
+-- Definir roles padrão
+SET DEFAULT ROLE admin_role FOR 'usuario_admin'@'localhost';
+SET DEFAULT ROLE comum_role FOR 'usuario_comum'@'localhost';
+
+-- Revogar permissões diretas
+REVOKE ALL PRIVILEGES ON testDB.* FROM 'usuario_admin'@'localhost';
+REVOKE ALL PRIVILEGES ON testDB.* FROM 'usuario_comum'@'localhost';
+
 INSERT INTO Usuario (Endereco, CPF, fk_Avaliacao_ID) VALUES
 ('Rua A, 123', '12345678901', 'AVL001'),
 ('Avenida B, 456', '98765432109', 'AVL002'),
