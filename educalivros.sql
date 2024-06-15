@@ -46,11 +46,13 @@ BEGIN
 END;
 
 CREATE TABLE Aluno (
-    Matricula CHAR,
-    _CR__coeficiente_de_rendimento FLOAT,
-    Faltas SMALLINT,
-    fk_Usuario_CPF CHAR,
-    PRIMARY KEY (Matricula, fk_Usuario_CPF)
+matricula char PRIMARY KEY, 
+_cr__coeficiente_de_rendimento double, 
+faltas_BD integer,
+faltas_SO integer,
+faltas_Redes integer,
+cpfaluno VARCHAR 
+foreign key (cpfaluno) references usuario(cpf)
 );
 
 CREATE TABLE Cliente_Externo_ (
@@ -121,13 +123,15 @@ CREATE TABLE Autor (
     Numero_de_Vendas SMALLINT
 );
 
-CREATE TABLE Editora (
-    Codigo CHAR,
-    Nome VARCHAR,
-    Endereco VARCHAR,
-    E_mail VARCHAR,
-    PRIMARY KEY (Codigo, Nome, E_mail)
-);
+CREATE TABLE editora (
+    codigo VARCHAR(50) PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    logradouro VARCHAR(255),
+    numero VARCHAR(20),
+    uf VARCHAR(2),
+    pais VARCHAR(100),
+    e_mail VARCHAR(100) UNIQUE
+) ;
 
 CREATE TABLE Categoria (
     ID CHAR PRIMARY KEY,
