@@ -1,5 +1,3 @@
-/* Lógico_1: */
-
 CREATE TABLE Usuario (
     Endereco VARCHAR,
     CPF CHAR PRIMARY KEY, 
@@ -72,7 +70,6 @@ CREATE TABLE Livro (
     PRIMARY KEY (ISBN, fk_Produto_ID)
 );
 
--- Adicionando operação UPDATE
 CREATE PROCEDURE UpdateLivro(IN p_ISBN CHAR, IN p_fk_Produto_ID CHAR, IN p_Quant_Estoque SMALLINT, IN p_Titulo VARCHAR)
 BEGIN
     UPDATE Livro
@@ -81,14 +78,12 @@ BEGIN
     WHERE ISBN = p_ISBN AND fk_Produto_ID = p_fk_Produto_ID;
 END;
 
--- Adicionando operação DELETE
 CREATE PROCEDURE DeleteLivro(IN p_ISBN CHAR, IN p_fk_Produto_ID CHAR)
 BEGIN
     DELETE FROM Livro WHERE ISBN = p_ISBN AND fk_Produto_ID = p_fk_Produto_ID;
 END;
 
-ALTER TABLE Livro ADD COLUMN Nota_Media FLOAT; -- pra o trigger CalcularMediaAvaliacao 
-
+ALTER TABLE Livro ADD COLUMN Nota_Media FLOAT; 
 CREATE TABLE AudioBook ( 
   	ISBN CHAR,
     Titulo VARCHAR,
@@ -216,30 +211,21 @@ CREATE TABLE recebe (
     fk_Livro_fk_Produto_ID Char
 );
 
---Adicionando segurança ao SQL
-
-
--- Criar usuários
 CREATE USER 'usuario_admin'@'localhost' IDENTIFIED BY 'senha_admin';
 CREATE USER 'usuario_comum'@'localhost' IDENTIFIED BY 'senha_comum';
 
--- Criar roles
 CREATE ROLE admin_role;
 CREATE ROLE comum_role;
 
--- Conceder permissões aos roles
 GRANT ALL PRIVILEGES ON testDB.* TO admin_role;
 GRANT SELECT, INSERT ON testDB.avaliação TO comum_role;
 
--- Atribuir roles aos usuários
 GRANT admin_role TO 'usuario_admin'@'localhost';
 GRANT comum_role TO 'usuario_comum'@'localhost';
 
--- Definir roles padrão
 SET DEFAULT ROLE admin_role FOR 'usuario_admin'@'localhost';
 SET DEFAULT ROLE comum_role FOR 'usuario_comum'@'localhost';
 
--- Revogar permissões diretas
 REVOKE ALL PRIVILEGES ON testDB.* FROM 'usuario_admin'@'localhost';
 REVOKE ALL PRIVILEGES ON testDB.* FROM 'usuario_comum'@'localhost';
 
@@ -386,7 +372,6 @@ INSERT INTO obtem (fk_Produto_ID) VALUES
 ('PRO004'),
 ('PRO005'); 
 
--- Cria uma função para atualizar a nota média, trigger 1
 CREATE OR REPLACE FUNCTION atualizar_nota_media()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -403,13 +388,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Cria trigger para INSERT e UPDATE na tabela Avaliacao
 CREATE TRIGGER trg_atualizar_nota_media
 AFTER INSERT OR UPDATE ON Avaliacao
 FOR EACH ROW
 EXECUTE FUNCTION atualizar_nota_media();
 
--- Cria uma função para atualizar a quantidade em estoque, trigger 2
 CREATE OR REPLACE FUNCTION atualizar_quantidade_estoque()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -421,13 +404,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Cria trigger para INSERT na tabela Pedido
 CREATE TRIGGER trg_atualizar_quantidade_estoque
 AFTER INSERT ON Pedido
 FOR EACH ROW
 EXECUTE FUNCTION atualizar_quantidade_estoque();
 
--- Criar uma função para atualizar a nota média do livro
 CREATE OR REPLACE FUNCTION atualizar_nota_media_livro(isbn_livro CHAR, produto_id CHAR) 
 RETURNS VOID AS $$
 BEGIN
@@ -443,7 +424,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Stored procedure para inserir uma nova avaliação e atualizar a nota média do livro
 CREATE OR REPLACE PROCEDURE inserir_avaliacao(
     p_ID CHAR,
     p_Nome VARCHAR,
@@ -456,22 +436,18 @@ CREATE OR REPLACE PROCEDURE inserir_avaliacao(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Inserir nova avaliação
     INSERT INTO Avaliacao (ID, Nome, Data, Comentarios, Nota)
     VALUES (p_ID, p_Nome, p_Data, p_Comentarios, p_Nota);
 
-    -- Inserir relacionamento na tabela 'recebe'
     INSERT INTO recebe (fk_Avaliacao_ID, fk_Livro_ISBN, fk_Livro_fk_Produto_ID)
     VALUES (p_ID, p_fk_Livro_ISBN, p_fk_Livro_fk_Produto_ID);
 
-    -- Atualizar a nota média do livro
     PERFORM atualizar_nota_media_livro(p_fk_Livro_ISBN, p_fk_Livro_fk_Produto_ID);
 END;
 $$;
 
 CALL inserir_avaliacao('AVL006', 'Novo Livro', '2024-05-01', 'Muito bom!', 4.7, '978-0142420591', 'LIV001'); -- Exemplo para stored procedure acima
 
--- Criar uma função para atualizar a quantidade em estoque do livro
 CREATE OR REPLACE FUNCTION atualizar_quantidade_estoque(produto_id CHAR) 
 RETURNS VOID AS $$
 BEGIN
@@ -482,7 +458,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Stored procedure para inserir um novo pedido e atualizar o estoque do livro
 CREATE OR REPLACE PROCEDURE inserir_pedido(
     p_Numero SMALLINT,
     p_Data DATE,
@@ -497,15 +472,12 @@ CREATE OR REPLACE PROCEDURE inserir_pedido(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Inserir novo pedido
     INSERT INTO Pedido (Numero, Data, Status, Cartao, Dinheiro, Valor, Produto, fk_Usuario_CPF)
     VALUES (p_Numero, p_Data, p_Status, p_Cartao, p_Dinheiro, p_Valor, p_Produto, p_fk_Usuario_CPF);
 
-    -- Inserir relacionamento na tabela 'obtem'
     INSERT INTO obtem (fk_Produto_ID, fk_Pedido_Numero)
     VALUES (p_fk_Produto_ID, p_Numero);
 
-    -- Atualizar a quantidade em estoque do livro
     PERFORM atualizar_quantidade_estoque(p_fk_Produto_ID);
 END;
 $$;
@@ -523,10 +495,8 @@ RETURNS TRIGGER AS $$
 DECLARE
     prev_vendas INT;
 BEGIN
-    -- Obter o valor anterior de N_de_Vendas
     SELECT "N_de_Vendas" INTO prev_vendas FROM livro WHERE isbn = NEW.isbn;
     
-    -- Se o número de vendas aumentou, atualizar o estoque
     IF NEW."N_de_Vendas" > prev_vendas THEN
         UPDATE livro 
         SET quant_estoque = quant_estoque - (NEW."N_de_Vendas" - prev_vendas)
@@ -557,32 +527,23 @@ SELECT
   Recomendação
 FROM autor;
 
--- Criar o role para usuário comum
 CREATE ROLE usuario_comum_aluno LOGIN PASSWORD 'senha_usuario_comum' NOSUPERUSER NOCREATEDB NOCREATEROLE;
 
--- Conceder permissões para o role acessar apenas as informações de aluno
 GRANT USAGE ON SCHEMA public TO usuario_comum_aluno;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
 
--- Limitar acesso apenas aos próprios dados do aluno
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT SELECT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
 
--- Permitir que o role utilize suas próprias funções para operações com os dados do aluno
 ALTER DEFAULT PRIVILEGES FOR ROLE usuario_comum_aluno IN SCHEMA public
   GRANT SELECT, UPDATE, DELETE ON TABLE aluno TO usuario_comum_aluno;
 
--- Criar o role administrativo para professor
 CREATE ROLE professor_admin LOGIN PASSWORD 'senha_professor_admin' SUPERUSER CREATEDB CREATEROLE;
 
--- Conceder permissões administrativas específicas
 GRANT USAGE ON SCHEMA public TO professor_admin;
 GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
 
--- Permitir que o role crie suas próprias funções e objetos
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
   GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
 ALTER DEFAULT PRIVILEGES FOR ROLE professor_admin IN SCHEMA public
   GRANT ALL PRIVILEGES ON TABLE professor TO professor_admin;
-
-
